@@ -1,5 +1,5 @@
 format = """
-[](#458588)[ $username](bg:#458588 fg:#282828)[](fg:#458588 bg:#d79921)[ $directory ](bg:#d79921 fg:#282828)[](fg:#d79921 bg:#98971a)[ $git_branch$git_status](bg:#98971a fg:#282828)[](fg:#98971a bg:#504945)[ $time ](bg:#504945 fg:#ebdbb2)[](#504945) $character"""
+[](#458588)[ $username](bg:#458588 fg:#282828)[](fg:#458588 bg:#d79921)[ $directory ](bg:#d79921 fg:#282828)([](fg:#d79921 bg:#98971a)[ $git_branch$git_status ](bg:#98971a fg:#282828))([](fg:#98971a bg:#b16286)[ $conda ](bg:#b16286 fg:#282828)[](fg:#b16286 bg:#504945))${custom.tail_repo}${custom.tail_no_repo}[ $time ](bg:#504945 fg:#ebdbb2)[](#504945) $character"""
 command_timeout = 5000
 
 [username]
@@ -12,16 +12,22 @@ format = "[$user ]($style)"
 style = "bg:#d79921 fg:#282828"
 format = "[$path]($style)"
 truncation_length = 3
-truncation_symbol = ".../"
+truncation_symbol = " "
 
 [git_branch]
-symbol = " "
+symbol = " "
 style = "bg:#98971a fg:#282828"
 format = "[$symbol$branch ]($style)"
 
 [git_status]
 style = "bg:#98971a fg:#282828"
 format = "[$all_status$ahead_behind]($style)"
+
+[conda]
+symbol = " "
+style = "bg:#b16286 fg:#282828"
+format = "[$symbol$environment ]($style)"
+ignore_base = true
 
 [time]
 disabled = false
@@ -32,3 +38,13 @@ format = "[$time]($style)"
 [character]
 success_symbol = "[❯](bold fg:#b8bb26)"
 error_symbol = "[❯](bold fg:#fb4934)"
+
+[custom.tail_repo]
+when = '([ -z "$CONDA_DEFAULT_ENV" ] || [ "$CONDA_DEFAULT_ENV" = "base" ]) && git rev-parse --is-inside-work-tree > /dev/null 2>&1'
+command = "true"
+format = "[](fg:#98971a bg:#504945)"
+
+[custom.tail_no_repo]
+when = '([ -z "$CONDA_DEFAULT_ENV" ] || [ "$CONDA_DEFAULT_ENV" = "base" ]) && ! git rev-parse --is-inside-work-tree > /dev/null 2>&1'
+command = "true"
+format = "[](fg:#d79921 bg:#504945)"
