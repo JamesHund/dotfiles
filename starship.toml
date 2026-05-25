@@ -1,5 +1,5 @@
 format = """
-[](#458588)[ $username](bg:#458588 fg:#282828)[](fg:#458588 bg:#d79921)[ $directory ](bg:#d79921 fg:#282828)([](fg:#d79921 bg:#98971a)[ $git_branch$git_status ](bg:#98971a fg:#282828))([](fg:#98971a bg:#b16286)[ $conda ](bg:#b16286 fg:#282828)[](fg:#b16286 bg:#504945))${custom.tail_repo}${custom.tail_no_repo}[ $time ](bg:#504945 fg:#ebdbb2)[](#504945) $character"""
+[](#504945)[ $time ](bg:#504945 fg:#ebdbb2)[](fg:#504945 bg:#458588)[ $username](bg:#458588 fg:#282828)[](fg:#458588 bg:#d79921)[ $directory ](bg:#d79921 fg:#282828)([](fg:#d79921 bg:#98971a)[ $git_branch$git_status ](bg:#98971a fg:#282828))([](fg:#98971a bg:#b16286)[ $conda ](bg:#b16286 fg:#282828)[](#b16286))${custom.tail_repo}${custom.tail_no_repo} $character"""
 command_timeout = 5000
 
 [username]
@@ -42,9 +42,9 @@ error_symbol = "[❯](bold fg:#fb4934)"
 [custom.tail_repo]
 when = '([ -z "$CONDA_DEFAULT_ENV" ] || [ "$CONDA_DEFAULT_ENV" = "base" ]) && git rev-parse --is-inside-work-tree > /dev/null 2>&1'
 command = "true"
-format = "[](fg:#98971a bg:#504945)"
+format = "[](#98971a)"
 
 [custom.tail_no_repo]
 when = '([ -z "$CONDA_DEFAULT_ENV" ] || [ "$CONDA_DEFAULT_ENV" = "base" ]) && ! git rev-parse --is-inside-work-tree > /dev/null 2>&1'
 command = "true"
-format = "[](fg:#d79921 bg:#504945)"
+format = "[](#d79921)"
