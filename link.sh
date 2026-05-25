@@ -210,6 +210,15 @@ main() {
   process_link ".config/nvim/init.lua"             "$HOME/.config/nvim/init.lua"
   process_link "starship.toml"                     "$HOME/.config/starship.toml"
 
+  # Ghostty config: macOS reads from Application Support; linux uses XDG.
+  if [ "$os" = mac ]; then
+    process_link ".config/ghostty/config.ghostty" \
+      "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
+  else
+    process_link ".config/ghostty/config.ghostty" \
+      "$HOME/.config/ghostty/config.ghostty"
+  fi
+
   [ "$os" = mac ] && { echo; ensure_bash_profile; }
 
   echo

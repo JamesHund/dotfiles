@@ -31,6 +31,8 @@ PACKAGES=(
   "neovim|Hyperextensible vim|neovim|neovim|neovim|nvim"
   "tmux|Terminal multiplexer|tmux|tmux|tmux|tmux"
   "lazygit|Terminal UI for git|lazygit|CUSTOM|lazygit|lazygit"
+  "ghostty|Fast, native terminal emulator|ghostty|CUSTOM|cask:ghostty|ghostty"
+  "geist-mono-nerd|GeistMono Nerd Font (for terminals)|CUSTOM|CUSTOM|cask:font-geist-mono-nerd-font|file:~/Library/Fonts/GeistMonoNerdFontMono-Regular.otf file:~/.local/share/fonts/GeistMonoNerdFontMono-Regular.otf"
 )
 
 # --- colors ---------------------------------------------------------------
@@ -72,10 +74,16 @@ os_pretty() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# is_installed "<space-separated commands>" -> 0 if any is on PATH.
+# is_installed "<space-separated tokens>" -> 0 if any matches.
+# Tokens: bare name (checked with command -v), or "file:<path>" (path exists).
 is_installed() {
-  local c
-  for c in $1; do command -v "$c" >/dev/null 2>&1 && return 0; done
+  local c p
+  for c in $1; do
+    case "$c" in
+      file:*) p="${c#file:}"; p="${p/#\~/$HOME}"; [ -e "$p" ] && return 0 ;;
+      *)      command -v "$c" >/dev/null 2>&1 && return 0 ;;
+    esac
+  done
   return 1
 }
 
@@ -83,6 +91,21 @@ is_installed() {
 install_starship_ubuntu() {
   command -v curl >/dev/null 2>&1 || sudo apt-get install -y curl || return 1
   curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+}
+
+install_geist_mono_nerd_linux() {
+  command -v curl  >/dev/null 2>&1 || { echo "curl required" >&2; return 1; }
+  command -v unzip >/dev/null 2>&1 || { echo "unzip required" >&2; return 1; }
+  local dest="$HOME/.local/share/fonts" tmp rc
+  mkdir -p "$dest" || return 1
+  tmp=$(mktemp -d) || return 1
+  curl -fsSL -o "$tmp/GeistMono.zip" \
+    "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/GeistMono.zip" \
+    && unzip -o "$tmp/GeistMono.zip" -d "$dest" >/dev/null
+  rc=$?
+  [ $rc -eq 0 ] && command -v fc-cache >/dev/null 2>&1 && fc-cache -f >/dev/null 2>&1
+  rm -rf "$tmp"
+  return $rc
 }
 
 install_lazygit_ubuntu() {
@@ -111,13 +134,29 @@ install_lazygit_ubuntu() {
 install_one() {
   local os="$1" name="$2" arch_pkg="$3" apt_pkg="$4" brew_pkg="$5"
   case "$os" in
-    arch) sudo pacman -S --needed --noconfirm "$arch_pkg" ;;
-    mac)  brew install "$brew_pkg" ;;
+    arch)
+      if [ "$arch_pkg" = CUSTOM ]; then
+        case "$name" in
+          geist-mono-nerd) install_geist_mono_nerd_linux ;;
+          *) echo "no fallback for $name" >&2; return 1 ;;
+        esac
+      else
+        sudo pacman -S --needed --noconfirm "$arch_pkg"
+      fi
+      ;;
+    mac)
+      # cask:<name> uses `brew install --cask`; bare name uses formula install.
+      case "$brew_pkg" in
+        cask:*) brew install --cask "${brew_pkg#cask:}" ;;
+        *)      brew install "$brew_pkg" ;;
+      esac
+      ;;
     ubuntu)
       if [ "$apt_pkg" = CUSTOM ]; then
         case "$name" in
-          starship) install_starship_ubuntu ;;
-          lazygit)  install_lazygit_ubuntu ;;
+          starship)        install_starship_ubuntu ;;
+          lazygit)         install_lazygit_ubuntu ;;
+          geist-mono-nerd) install_geist_mono_nerd_linux ;;
           *) echo "no fallback for $name" >&2; return 1 ;;
         esac
       else
