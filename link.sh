@@ -35,6 +35,18 @@ ok()   { printf '%s%s%s\n' "$GREEN" "$1" "$RESET"; }
 warn() { printf '%s%s%s\n' "$YELLOW" "$1" "$RESET"; }
 err()  { printf '%s%s%s\n' "$RED" "$1" "$RESET" >&2; }
 
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# Link only if $1 is on PATH; otherwise print a skip note.
+link_if_installed() {
+  local tool="$1" src="$2" dst="$3"
+  if have "$tool"; then
+    process_link "$src" "$dst"
+  else
+    info "skip ($tool not installed): $dst"
+  fi
+}
+
 detect_os() {
   case "$(uname -s)" in
     Darwin) echo mac ;;
@@ -204,22 +216,26 @@ main() {
   [ "$DRY" = 1 ] && warn "dry run — no changes will be made"
   echo
 
-  ensure_block "$HOME/.bashrc" "$REPO/shell/$os/.bashrc"
-  ensure_block "$HOME/.zshrc"  "$REPO/shell/$os/.zshrc"
-  process_link ".config/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
-  process_link ".config/nvim/init.lua"             "$HOME/.config/nvim/init.lua"
-  process_link "starship.toml"                     "$HOME/.config/starship.toml"
+  # Only link configs for tools that are actually installed.
+  if have bash; then ensure_block "$HOME/.bashrc" "$REPO/shell/$os/.bashrc"
+  else               info "skip (bash not installed): $HOME/.bashrc"; fi
+  if have zsh;  then ensure_block "$HOME/.zshrc"  "$REPO/shell/$os/.zshrc"
+  else               info "skip (zsh not installed): $HOME/.zshrc"; fi
+
+  link_if_installed alacritty ".config/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
+  link_if_installed nvim      ".config/nvim/init.lua"            "$HOME/.config/nvim/init.lua"
+  link_if_installed starship  "starship.toml"                    "$HOME/.config/starship.toml"
 
   # Ghostty config: macOS reads from Application Support; linux uses XDG.
   if [ "$os" = mac ]; then
-    process_link ".config/ghostty/config.ghostty" \
+    link_if_installed ghostty ".config/ghostty/config.ghostty" \
       "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
   else
-    process_link ".config/ghostty/config.ghostty" \
+    link_if_installed ghostty ".config/ghostty/config.ghostty" \
       "$HOME/.config/ghostty/config.ghostty"
   fi
 
-  [ "$os" = mac ] && { echo; ensure_bash_profile; }
+  [ "$os" = mac ] && have bash && { echo; ensure_bash_profile; }
 
   echo
   ok "Done."
